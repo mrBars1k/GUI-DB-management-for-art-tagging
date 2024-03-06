@@ -154,7 +154,8 @@ context_menu.add_command(label="Удалить", command=delete_from_art)
 def find_sim_au(author):
     cur.execute(f"""SELECT ru FROM main_tags 
     WHERE ru LIKE '%{author}%'
-    AND type = 'author'""")
+    AND type = 'author'
+    ORDER BY date DESC""")
     all_authors = cur.fetchall()
     return all_authors
 

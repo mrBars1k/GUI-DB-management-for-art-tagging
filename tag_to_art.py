@@ -180,6 +180,11 @@ def add_art():
     cur.execute(f"""INSERT INTO arts (artist, url, original_link) VALUES (
                 '{a_name}', '{a_url}', '{o_link}'
                 );""")
+
+    cur.execute("SELECT ID FROM arts ORDER BY date DESC LIMIT 1")
+    last_art = cur.fetchone()
+    cur.execute(f"INSERT INTO tag_to_art (art, tag) VALUES ('{last_art[0]}', '{a_name}');")
+
     adb.commit()
 
     author_name.delete(0, END)
@@ -187,6 +192,9 @@ def add_art():
     orig_link.delete(0, END)
     fill_parent_sim()
     find_arts()
+
+
+
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ## AUTHORS SIDE;

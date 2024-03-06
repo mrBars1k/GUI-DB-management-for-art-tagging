@@ -91,15 +91,17 @@ art_to_tag.place(x=20, y=40)
 
 def up_in_tag(event):
     att = art_to_tag.get()
-    tag_id = int(att.split("|")[0].strip())
+    art_id = int(att.split("|")[0].strip())
 
-    cur.execute(f"""SELECT main_tags.id, tag_to_art.tag, COUNT(tag_to_art.art) AS count
-                FROM main_tags
-                JOIN tag_to_art ON main_tags.ru = tag_to_art.tag
-                WHERE tag_to_art.art = {tag_id}
-                GROUP BY main_tags.id, tag_to_art.tag
-                ORDER BY count, date DESC
-                """)
+    cur.execute(f"""SELECT t1.id, t2.tag, COUNT(*) AS "count"
+            FROM main_tags t1
+            JOIN tag_to_art t2 ON t1.ru = t2.tag
+            JOIN arts t3 ON t2.art = t3.id
+            GROUP BY t1.id, t2.tag
+            HAVING MAX((t2.art = {art_id})::INT) = 1
+            ORDER BY count DESC;
+            """)
+
     data = cur.fetchall()
 
     for i in tree.get_children(): ## delete previous data;
@@ -119,12 +121,13 @@ def adta(event):
     except:
         adb.rollback()
         print(f"Не удалось добавить тег <{ita}> к арту <{att}>!")
-    up_in_tag()
+    up_in_tag(event)
+    in_tag_art.delete(0, END)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ## REACTIONS;
 in_tag_art.bind("<Return>", fill_parent_sim)
-in_tag_art.bind("<App>", adta)
+in_tag_art.bind("<Shift_R>", adta)
 art_to_tag.bind("<<ComboboxSelected>>", up_in_tag)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##

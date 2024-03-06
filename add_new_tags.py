@@ -102,7 +102,7 @@ def send_to_table():
         alias3_text = alias3_entry.get()
         alias4_text = alias4_entry.get()
         type_text = type_selected_value.get()
-        y = [ru_text, eng_text, alias1_text, alias2_text, alias3_text, alias4_text, type_text]
+        y = [ru_text.strip(), eng_text.strip(), alias1_text.strip(), alias2_text.strip(), alias3_text.strip(), alias4_text.strip(), type_text.strip()]
         y = [i.lower() for i in y]  ## make all entered data in lower case;
         x = [i if i.strip() != "" else None for i in y]  ## checks for an empty string and, if empty, returns None;
 

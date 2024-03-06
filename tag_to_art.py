@@ -93,10 +93,13 @@ def up_in_tag(event):
     att = art_to_tag.get()
     tag_id = int(att.split("|")[0].strip())
 
-    cur.execute(f"""SELECT main_tags.id, tag_to_art.tag
-                    FROM main_tags
-                    JOIN tag_to_art ON main_tags.ru = tag_to_art.tag
-                    WHERE tag_to_art.art = {tag_id}""")
+    cur.execute(f"""SELECT main_tags.id, tag_to_art.tag, COUNT(tag_to_art.art) AS count
+                FROM main_tags
+                JOIN tag_to_art ON main_tags.ru = tag_to_art.tag
+                WHERE tag_to_art.art = {tag_id}
+                GROUP BY main_tags.id, tag_to_art.tag
+                ORDER BY count, date DESC
+                """)
     data = cur.fetchall()
 
     for i in tree.get_children(): ## delete previous data;

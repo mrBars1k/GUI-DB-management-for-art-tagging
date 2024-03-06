@@ -58,7 +58,7 @@ def get_similar_tags(tag_to_find):  ## find all tags similar in name;
                  '%' + tag_to_find + '%', '%' + tag_to_find + '%'))
     return [row[0] for row in cur.fetchall()]  ## sorted by usage and date;
 
-def fill_parent_sim(event):  ## fill out the dropdown list;
+def fill_parent_sim(event=None):  ## fill out the dropdown list;
     tag_to_find = in_tag_art.get()  ## entered data in the add parent tag field;
     similar_tags = get_similar_tags(tag_to_find)  ## found all similar tags (ru version) to those entered by the user;
     ## ['рукава', 'длинные рукава', 'короткие рукава']
@@ -85,7 +85,7 @@ in_tag_art = ttk.Combobox(ttaw, width=43, font=("Arial", 14))
 in_tag_art.place(x=20, y=90)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-## ART TO TAG;
+## UPDATE TABLE;
 art_to_tag = ttk.Combobox(ttaw, width=43, font=("Arial", 14))
 art_to_tag.place(x=20, y=40)
 
@@ -101,7 +101,6 @@ def up_in_tag(event=None):
             HAVING MAX((t2.art = {art_id})::INT) = 1
             ORDER BY count DESC;
             """)
-
     data = cur.fetchall()
 
     for i in tree.get_children(): ## delete previous data;
@@ -110,6 +109,8 @@ def up_in_tag(event=None):
     for j in data: ## fill with new ones;
         tree.insert("", "end", values=j)
 
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ART TO TAG;
 def adta(event):
     ita = in_tag_art.get()
     att = art_to_tag.get()
@@ -121,10 +122,12 @@ def adta(event):
     except:
         adb.rollback()
         print(f"Не удалось добавить тег <{ita}> к арту <{att}>!")
-    up_in_tag(event)
+    up_in_tag()
     in_tag_art.delete(0, END)
 
-def delete_fom_art():
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## DELETE TAG FROM ART;
+def delete_from_art():
     att = art_to_tag.get()
     art_id = int(att.split("|")[0].strip())
 
@@ -138,11 +141,60 @@ def delete_fom_art():
     adb.commit()
     up_in_tag()
 
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## CONTEXT MENU;
 def show_context_menu(event):
     context_menu.post(event.x_root, event.y_root)
 
 context_menu = Menu(ttaw, tearoff=0)
-context_menu.add_command(label="Удалить", command=delete_fom_art)
+context_menu.add_command(label="Удалить", command=delete_from_art)
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## FIND AUTHORS;
+def find_sim_au(author):
+    cur.execute(f"""SELECT ru FROM main_tags 
+    WHERE ru LIKE '%{author}%'
+    AND type = 'author'""")
+    all_authors = cur.fetchall()
+    return all_authors
+
+def find_artist(event=None):  ## fill out the dropdown list;
+    au_to_find = author_name.get()  ## entered data in the add parent tag field;
+    similar_au = find_sim_au(au_to_find)  ## found all similar artists to those entered by the user;
+    ## ['author', 'artist', 'mrBars1k']
+
+    author_name["values"] = similar_au  ## fill out the dropdown list;
+    author_name.event_generate('<Down>')  ## expand the list;
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ADD ART;
+def add_art():
+    a_name = author_name.get().strip()
+    a_url = art_url.get().strip()
+    o_link = orig_link.get().strip()
+
+    cur.execute(f"""INSERT INTO arts (artist, url, original_link) VALUES (
+                '{a_name}', '{a_url}', '{o_link}'
+                );""")
+    adb.commit()
+
+    author_name.delete(0, END)
+    art_url.delete(0, END)
+    orig_link.delete(0, END)
+    fill_parent_sim()
+    find_arts()
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## AUTHORS SIDE;
+author_name = ttk.Combobox(ttaw, width=30, font=("Arial", 14))
+art_url = Entry(ttaw, width=40, borderwidth=3, font=("Arial", 18))
+orig_link = Entry(ttaw, width=40, borderwidth=3, font=("Arial", 18))
+add_art_btn = Button(text="Add art", width=32, font=("Arial", 14), command=add_art)
+
+author_name.place(x=700, y=50)
+art_url.place(x=700, y=100)
+orig_link.place(x=700, y=150)
+add_art_btn.place(x=700, y=210)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ## REACTIONS;
@@ -150,10 +202,12 @@ in_tag_art.bind("<Return>", fill_parent_sim)
 in_tag_art.bind("<Shift_R>", adta)
 art_to_tag.bind("<<ComboboxSelected>>", up_in_tag)
 tree.bind("<Button-3>", show_context_menu)
+author_name.bind("<Return>", find_artist)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-fill_parent_sim("")
+fill_parent_sim()
 find_arts()
+find_artist()
 
 ttaw.mainloop() # START;
 cur.close()

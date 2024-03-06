@@ -110,8 +110,8 @@ def up_in_tag(event=None):
         tree.insert("", "end", values=j)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-## ART TO TAG;
-def adta(event):
+## TAG TO ART;
+def adta(event=None):
     ita = in_tag_art.get()
     att = art_to_tag.get()
     tag_id = int(att.split("|")[0].strip())
@@ -124,6 +124,9 @@ def adta(event):
         print(f"Не удалось добавить тег <{ita}> к арту <{att}>!")
     up_in_tag()
     in_tag_art.delete(0, END)
+
+add_tag_to_art_btn = Button(ttaw, text="Add", width=5, height=3, font=("Arial", 14), command=adta)
+add_tag_to_art_btn.place(x=540, y=38)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ## DELETE TAG FROM ART;
@@ -190,7 +193,7 @@ def add_art():
 author_name = ttk.Combobox(ttaw, width=30, font=("Arial", 14))
 art_url = Entry(ttaw, width=40, borderwidth=3, font=("Arial", 18))
 orig_link = Entry(ttaw, width=40, borderwidth=3, font=("Arial", 18))
-add_art_btn = Button(text="Add art", width=32, font=("Arial", 14), command=add_art)
+add_art_btn = Button(ttaw, text="Add art", width=32, font=("Arial", 14), command=add_art)
 
 author_name.place(x=700, y=50)
 art_url.place(x=700, y=100)

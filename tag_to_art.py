@@ -193,9 +193,6 @@ def add_art():
     fill_parent_sim()
     find_arts()
 
-
-
-
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ## AUTHORS SIDE;
 author_name = ttk.Combobox(ttaw, width=30, font=("Arial", 14))

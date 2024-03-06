@@ -335,263 +335,267 @@ vsb.place(x=1710, y=50, height=800) ## sidebar for scrolling;
 ## TAG CHANGE WINDOW;
 
 def description_window(): ## window for setting up an individual tag;
-    def get_similar_tags(tag_to_find): ## find all tags similar in name;
-        cur.execute("""
-            SELECT mt.ru, COUNT(tta.art) AS count
-            FROM main_tags AS mt
-            LEFT JOIN tag_to_art AS tta ON mt.ru = tta.tag
-            WHERE 
-            mt.ru LIKE %s 
-            OR mt.eng LIKE %s 
-            OR mt.alias1 LIKE %s 
-            OR mt.alias2 LIKE %s 
-            OR mt.alias3 LIKE %s 
-            OR mt.alias4 LIKE %s
-            GROUP BY mt.id
-            ORDER BY count DESC, date DESC""",
-            ('%' + tag_to_find + '%', '%' + tag_to_find + '%', '%' + tag_to_find + '%', '%' + tag_to_find + '%',
-             '%' + tag_to_find + '%', '%' + tag_to_find + '%'))
-        return [row[0] for row in cur.fetchall()] ## sorted by usage and date;
+    item = tree.selection() ## selected cell in table;
+    if item == ():
+        print("Пусто.")
 
-    def fill_parent_sim(event): ## fill out the dropdown list;
-        tag_to_find = pch_entry.get() ## entered data in the add parent tag field;
-        similar_tags = get_similar_tags(tag_to_find) ## found all similar tags (ru version) to those entered by the user;
-        ## ['рукава', 'длинные рукава', 'короткие рукава']
-
-        pch_entry["values"] = similar_tags ## fill out the dropdown list;
-        pch_entry.event_generate('<Down>') ## expand the list;
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-
-    popup = Toplevel() ## tag change window instance;
-    popup.title("Menu:")
-
-    screen_width = mainw.winfo_screenwidth()
-    screen_height = mainw.winfo_screenheight()
-
-    popup_width = 1020
-    popup_height = 600
-    x_position = (screen_width - popup_width) // 2
-    y_position = (screen_height - popup_height) // 2
-
-    popup.geometry("{}x{}+{}+{}".format(popup_width, popup_height, x_position, y_position))
-
-    item = tree.selection()[0] ## selected cell in table;
-    id_text = tree.item(item, "values")[0] ## id of the selected object from the database;
-
-    cur.execute(f"""SELECT ru, eng, alias1, alias2, alias3, alias4, type FROM main_tags WHERE id = {id_text}""")
-    pop_tag_info = cur.fetchone() ## ('ru', 'eng', 'al1', 'al2', 'al3', 'al3', 'type')
-
-    name_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
-    name_entry.insert(0, f"{pop_tag_info[0]}")
-    name_entry.grid(row=0, column=0, padx=30, pady=15) ## ru;
-
-    name2_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
-    name2_entry.insert(0, f"{pop_tag_info[1]}")
-    name2_entry.grid(row=1, column=0, padx=30, pady=15) ## eng;
-
-    name3_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
-    name3_entry.insert(0, f"{pop_tag_info[2]}")
-    name3_entry.grid(row=2, column=0, padx=30, pady=15) ## alias1;
-
-    name4_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
-    name4_entry.insert(0, f"{pop_tag_info[3]}")
-    name4_entry.grid(row=3, column=0, padx=30, pady=15) ## alias2;
-
-    name5_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
-    name5_entry.insert(0, f"{pop_tag_info[4]}")
-    name5_entry.grid(row=4, column=0, padx=30, pady=15) ## alias3;
-
-    name6_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
-    name6_entry.insert(0, f"{pop_tag_info[5]}")
-    name6_entry.grid(row=5, column=0, padx=30, pady=15) ## alias4;
-
-    what_type = pop_tag_info[6] ## tag type;
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-
-    if what_type == 'author': ## if the type is "author", then insert links instead of descriptions;
-        cur.execute(f"SELECT type_source, link FROM author_links WHERE artist = (SELECT ru FROM main_tags WHERE id = {id_text})")
-        links = cur.fetchall() ## [('source1', 'https://link'), ('source2', 'https://link2')]
-        all_links = ''
-
-        for i in links: ## "source: link"\n;
-            all_links += f'{i[0]}: {i[1]}\n'
-
-        links_text = Text(popup, width=60, height=10, wrap=WORD) ## multiline input field for displaying sources;
-        links_text.grid(row=0, column=1, rowspan=3, columnspan=2)
-        links_text.insert(END, all_links)
-
-        # lt1 = links_text.get(1.0, END) ## всё без отделения;
-        # lt1 = lt1.replace('\n', '') ## удаление лишних переносов из многострочного поля ввода;
-        # lines = lt1.strip().split('\n') ## список строк ('источник: ссылка',);
-        # lines2 = [tuple(line.split(': ', 1)) for line in lines] ## список кортежей ('источник', 'ссылка'), (. . .) );
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
     else:
-        cur.execute(f"SELECT text, language FROM descriptions WHERE id = '{id_text}' ORDER BY language DESC")
-        description_all = cur.fetchall() ## [('<текст описания>', 'RU'), ('<description text>', 'EN')];
+        item = tree.selection()[0]  ## selected cell in table;
+        id_text = tree.item(item, "values")[0]  ## id of the selected object from the database;
+        def get_similar_tags(tag_to_find): ## find all tags similar in name;
+            cur.execute("""
+                SELECT mt.ru, COUNT(tta.art) AS count
+                FROM main_tags AS mt
+                LEFT JOIN tag_to_art AS tta ON mt.ru = tta.tag
+                WHERE 
+                mt.ru LIKE %s 
+                OR mt.eng LIKE %s 
+                OR mt.alias1 LIKE %s 
+                OR mt.alias2 LIKE %s 
+                OR mt.alias3 LIKE %s 
+                OR mt.alias4 LIKE %s
+                GROUP BY mt.id
+                ORDER BY count DESC, date DESC""",
+                ('%' + tag_to_find + '%', '%' + tag_to_find + '%', '%' + tag_to_find + '%', '%' + tag_to_find + '%',
+                 '%' + tag_to_find + '%', '%' + tag_to_find + '%'))
+            return [row[0] for row in cur.fetchall()] ## sorted by usage and date;
 
-        if description_all: ## if there is a description;
+        def fill_parent_sim(event): ## fill out the dropdown list;
+            tag_to_find = pch_entry.get() ## entered data in the add parent tag field;
+            similar_tags = get_similar_tags(tag_to_find) ## found all similar tags (ru version) to those entered by the user;
+            ## ['рукава', 'длинные рукава', 'короткие рукава']
 
-            if description_all[0]: ## if there is a description in Russian;
-                description_ru = description_all[0]
-            else: ## if there is no description, then return an empty list of strings;
+            pch_entry["values"] = similar_tags ## fill out the dropdown list;
+            pch_entry.event_generate('<Down>') ## expand the list;
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+        popup = Toplevel() ## tag change window instance;
+        popup.title("Menu:")
+
+        screen_width = mainw.winfo_screenwidth()
+        screen_height = mainw.winfo_screenheight()
+
+        popup_width = 1020
+        popup_height = 600
+        x_position = (screen_width - popup_width) // 2
+        y_position = (screen_height - popup_height) // 2
+
+        popup.geometry("{}x{}+{}+{}".format(popup_width, popup_height, x_position, y_position))
+
+        cur.execute(f"""SELECT ru, eng, alias1, alias2, alias3, alias4, type FROM main_tags WHERE id = {id_text}""")
+        pop_tag_info = cur.fetchone() ## ('ru', 'eng', 'al1', 'al2', 'al3', 'al3', 'type')
+
+        name_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
+        name_entry.insert(0, f"{pop_tag_info[0]}")
+        name_entry.grid(row=0, column=0, padx=30, pady=15) ## ru;
+
+        name2_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
+        name2_entry.insert(0, f"{pop_tag_info[1]}")
+        name2_entry.grid(row=1, column=0, padx=30, pady=15) ## eng;
+
+        name3_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
+        name3_entry.insert(0, f"{pop_tag_info[2]}")
+        name3_entry.grid(row=2, column=0, padx=30, pady=15) ## alias1;
+
+        name4_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
+        name4_entry.insert(0, f"{pop_tag_info[3]}")
+        name4_entry.grid(row=3, column=0, padx=30, pady=15) ## alias2;
+
+        name5_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
+        name5_entry.insert(0, f"{pop_tag_info[4]}")
+        name5_entry.grid(row=4, column=0, padx=30, pady=15) ## alias3;
+
+        name6_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
+        name6_entry.insert(0, f"{pop_tag_info[5]}")
+        name6_entry.grid(row=5, column=0, padx=30, pady=15) ## alias4;
+
+        what_type = pop_tag_info[6] ## tag type;
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+        if what_type == 'author': ## if the type is "author", then insert links instead of descriptions;
+            cur.execute(f"SELECT type_source, link FROM author_links WHERE artist = (SELECT ru FROM main_tags WHERE id = {id_text})")
+            links = cur.fetchall() ## [('source1', 'https://link'), ('source2', 'https://link2')]
+            all_links = ''
+
+            for i in links: ## "source: link"\n;
+                all_links += f'{i[0]}: {i[1]}\n'
+
+            links_text = Text(popup, width=60, height=10, wrap=WORD) ## multiline input field for displaying sources;
+            links_text.grid(row=0, column=1, rowspan=3, columnspan=2)
+            links_text.insert(END, all_links)
+
+            # lt1 = links_text.get(1.0, END) ## всё без отделения;
+            # lt1 = lt1.replace('\n', '') ## удаление лишних переносов из многострочного поля ввода;
+            # lines = lt1.strip().split('\n') ## список строк ('источник: ссылка',);
+            # lines2 = [tuple(line.split(': ', 1)) for line in lines] ## список кортежей ('источник', 'ссылка'), (. . .) );
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+        else:
+            cur.execute(f"SELECT text, language FROM descriptions WHERE id = '{id_text}' ORDER BY language DESC")
+            description_all = cur.fetchall() ## [('<текст описания>', 'RU'), ('<description text>', 'EN')];
+
+            if description_all: ## if there is a description;
+
+                if description_all[0]: ## if there is a description in Russian;
+                    description_ru = description_all[0]
+                else: ## if there is no description, then return an empty list of strings;
+                    description_ru = ['', '', '', '']
+
+                if description_all[1]: ## if there is a description in English;
+                    description_eng = description_all[1]
+                else:
+                    description_eng = ['', '', '', '']
+
+            else: ## if there is no description in all languages;
                 description_ru = ['', '', '', '']
-
-            if description_all[1]: ## if there is a description in English;
-                description_eng = description_all[1]
-            else:
                 description_eng = ['', '', '', '']
 
-        else: ## if there is no description in all languages;
-            description_ru = ['', '', '', '']
-            description_eng = ['', '', '', '']
+            description_text = Text(popup, width=60, height=6, wrap=WORD)
+            description_text.grid(row=0, column=1, rowspan=2, columnspan=2)
+            description_text.insert(END, description_ru[0]) ## RU;
 
-        description_text = Text(popup, width=60, height=6, wrap=WORD)
-        description_text.grid(row=0, column=1, rowspan=2, columnspan=2)
-        description_text.insert(END, description_ru[0]) ## RU;
+            description_text2 = Text(popup, width=60, height=6, wrap=WORD)
+            description_text2.grid(row=2, column=1, rowspan=2, columnspan=2)
+            description_text2.insert(END, description_eng[0]) # EN;
 
-        description_text2 = Text(popup, width=60, height=6, wrap=WORD)
-        description_text2.grid(row=2, column=1, rowspan=2, columnspan=2)
-        description_text2.insert(END, description_eng[0]) # EN;
+            ## if need another language;
+            # description_text3 = Text(popup, width=60, height=6, wrap=WORD)
+            # description_text3.grid(row=4, column=1, rowspan=2, columnspan=2)
+            # description_text3.insert(END, description_eng[0])
 
-        ## if need another language;
-        # description_text3 = Text(popup, width=60, height=6, wrap=WORD)
-        # description_text3.grid(row=4, column=1, rowspan=2, columnspan=2)
-        # description_text3.insert(END, description_eng[0])
+        type_op = ["description", "object", "other", "author", "copyright", "character", "unknown"]
 
-    type_op = ["description", "object", "other", "author", "copyright", "character", "unknown"]
+        spinbox_var = StringVar(value=f"{pop_tag_info[6]}") ## tag type;
 
-    spinbox_var = StringVar(value=f"{pop_tag_info[6]}") ## tag type;
+        type_c = ttk.Combobox(popup, values=type_op, state="readonly", width=20, font=("Arial", 13))
+        type_c.grid(row=6, column=0, pady=10, padx=30, sticky='we') ## dropdown list with tag types;
+        type_c.set(spinbox_var.get()) ## set the type corresponding to the tag;
 
-    type_c = ttk.Combobox(popup, values=type_op, state="readonly", width=20, font=("Arial", 13))
-    type_c.grid(row=6, column=0, pady=10, padx=30, sticky='we') ## dropdown list with tag types;
-    type_c.set(spinbox_var.get()) ## set the type corresponding to the tag;
+        def get_pop():
+            name_e = name_entry.get()
+            name2_e = name2_entry.get()
+            name3_e = name3_entry.get()
+            name4_e = name4_entry.get()
+            name5_e = name5_entry.get()
+            name6_e = name6_entry.get()
+            dt1 = description_text.get(1.0, END).strip() ## ru;
+            dt2 = description_text2.get(1.0, END).strip() ## eng;
+            type = type_c.get()
 
-    def get_pop():
-        name_e = name_entry.get()
-        name2_e = name2_entry.get()
-        name3_e = name3_entry.get()
-        name4_e = name4_entry.get()
-        name5_e = name5_entry.get()
-        name6_e = name6_entry.get()
-        dt1 = description_text.get(1.0, END).strip() ## ru;
-        dt2 = description_text2.get(1.0, END).strip() ## eng;
-        type = type_c.get()
+            v = [name_e, name2_e, name3_e, name4_e, name5_e, name6_e, type]
+            v = [i.lower() for i in v] ## all tag data in the list is in lowercase;
 
-        v = [name_e, name2_e, name3_e, name4_e, name5_e, name6_e, type]
-        v = [i.lower() for i in v] ## all tag data in the list is in lowercase;
+            for i in range(len(v)):
+                if v[i].lower() == 'none': ## if it was text, it will become a data type;
+                    v[i] = None
+                elif v[i].lower() == '': ## if it was an empty string, it will become type None;
+                    v[i] = None
 
-        for i in range(len(v)):
-            if v[i].lower() == 'none': ## if it was text, it will become a data type;
-                v[i] = None
-            elif v[i].lower() == '': ## if it was an empty string, it will become type None;
-                v[i] = None
+            cur.execute('''UPDATE main_tags
+                            SET ru = %s, eng = %s, alias1 = %s, alias2 = %s, alias3 = %s, alias4 = %s, type = %s
+                            WHERE id = %s''', (v[0], v[1], v[2], v[3], v[4], v[5], v[6], id_text))
+            adb.commit() ## changing/adding translations, aliases and tag type;
 
-        cur.execute('''UPDATE main_tags
-                        SET ru = %s, eng = %s, alias1 = %s, alias2 = %s, alias3 = %s, alias4 = %s, type = %s
-                        WHERE id = %s''', (v[0], v[1], v[2], v[3], v[4], v[5], v[6], id_text))
-        adb.commit() ## changing/adding translations, aliases and tag type;
+            try: ## delete the old description if there was one and add a new one;
+                cur.execute(f"DELETE FROM descriptions WHERE id = '{id_text}'")
 
-        try: ## delete the old description if there was one and add a new one;
-            cur.execute(f"DELETE FROM descriptions WHERE id = '{id_text}'")
+                cur.execute(f"""INSERT INTO descriptions (id, text, language)
+                            VALUES ('{id_text}', '{dt1}', 'RU')""")
 
-            cur.execute(f"""INSERT INTO descriptions (id, text, language)
-                        VALUES ('{id_text}', '{dt1}', 'RU')""")
+                cur.execute(f"""INSERT INTO descriptions (id, text, language)
+                            VALUES ('{id_text}', '{dt2}', 'EN')""")
+                adb.commit()
 
-            cur.execute(f"""INSERT INTO descriptions (id, text, language)
-                        VALUES ('{id_text}', '{dt2}', 'EN')""")
-            adb.commit()
+                update_table()
+                print('1. Description updated!')
 
-            update_table()
-            print('1. Description updated!')
-
-        except:
-            adb.rollback()
-            print('1. Description failed!')
-            pass
-
-        try:
-            ru_need = pch_entry.get() ## get the ru name of the tag that will become the parent;
-            cur.execute(f"SELECT id FROM main_tags WHERE ru = '{ru_need}'")
-            need = cur.fetchone() ## get the id;
-            if int(need[0]) == int(id_text): ## check for same anchor tag;
+            except:
+                adb.rollback()
+                print('1. Description failed!')
                 pass
-            else:
-                cur.execute(f"INSERT INTO parents_children (mother, child) VALUES (%s, %s)", (need[0], id_text))
-                adb.commit() ## link parent and selected tags;
-                print("2. The parent tag has been successfully installed!")
-        except:
-            adb.rollback()
-            print("2. The parent tag is not set!")
 
-        print("3. All updated!\n")
-        new_values_combo()
+            try:
+                ru_need = pch_entry.get() ## get the ru name of the tag that will become the parent;
+                cur.execute(f"SELECT id FROM main_tags WHERE ru = '{ru_need}'")
+                need = cur.fetchone() ## get the id;
+                if int(need[0]) == int(id_text): ## check for same anchor tag;
+                    pass
+                else:
+                    cur.execute(f"INSERT INTO parents_children (mother, child) VALUES (%s, %s)", (need[0], id_text))
+                    adb.commit() ## link parent and selected tags;
+                    print("2. The parent tag has been successfully installed!")
+            except:
+                adb.rollback()
+                print("2. The parent tag is not set!")
 
-    get_en = Button(popup, text="CONFIRM", command=get_pop, width=20, height=2)
-    get_en.grid(row=7, column=0, padx=20, pady=40, sticky='we')
+            print("3. All updated!\n")
+            new_values_combo()
 
-    pch_entry = ttk.Combobox(popup, width=30, font=("Arial", 13)) ## dropdown list with all tags and search;
+        get_en = Button(popup, text="CONFIRM", command=get_pop, width=20, height=2)
+        get_en.grid(row=7, column=0, padx=20, pady=40, sticky='we')
+
+        pch_entry = ttk.Combobox(popup, width=30, font=("Arial", 13)) ## dropdown list with all tags and search;
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-    mother_tags_cmb = ttk.Combobox(popup, font=("Arial", 13), state="readonly")
-    child_tags_cmb = ttk.Combobox(popup, font=("Arial", 13), state="readonly")
+        mother_tags_cmb = ttk.Combobox(popup, font=("Arial", 13), state="readonly")
+        child_tags_cmb = ttk.Combobox(popup, font=("Arial", 13), state="readonly")
 
-    def new_values_combo(): ## fill parent and child lists with new values;
-        cur.execute(f"""SELECT ru FROM parents_children
-                        JOIN main_tags ON main_tags.id = parents_children.mother
-                        WHERE child = '{id_text}'
+        def new_values_combo(): ## fill parent and child lists with new values;
+            cur.execute(f"""SELECT ru FROM parents_children
+                            JOIN main_tags ON main_tags.id = parents_children.mother
+                            WHERE child = '{id_text}'
+                            """)
+            mother_tags = cur.fetchall()
+            mother_tags_form = []
+            for i in mother_tags:
+                mother_tags_form += i
+            mother_tags_cmb["values"] = mother_tags_form
+
+            ## ## ## ##
+
+            cur.execute(f"""SELECT ru FROM parents_children
+                            JOIN main_tags ON main_tags.id = parents_children.child
+                            WHERE mother = '{id_text}'
                         """)
-        mother_tags = cur.fetchall()
-        mother_tags_form = []
-        for i in mother_tags:
-            mother_tags_form += i
-        mother_tags_cmb["values"] = mother_tags_form
+            child_tags = cur.fetchall()
+            child_tags_form = []
+            for i in child_tags:
+                child_tags_form += i
+            child_tags_cmb["values"] = child_tags_form
 
-        ## ## ## ##
+        new_values_combo() ## updating data after confirmation;
 
-        cur.execute(f"""SELECT ru FROM parents_children
-                        JOIN main_tags ON main_tags.id = parents_children.child
-                        WHERE mother = '{id_text}'
-                    """)
-        child_tags = cur.fetchall()
-        child_tags_form = []
-        for i in child_tags:
-            child_tags_form += i
-        child_tags_cmb["values"] = child_tags_form
+        pch_entry.grid(row=7, column=1, columnspan=2, sticky='n') ## specify parent tag;;
+        mother_tags_cmb.grid(row=8, column=1, sticky='we', padx=10) ## already specified parent tags;
+        child_tags_cmb.grid(row=8, column=2, sticky='we', padx=10) ## already specified child tags;
 
-    new_values_combo() ## updating data after confirmation;
+        ## ##
 
-    pch_entry.grid(row=7, column=1, columnspan=2, sticky='n') ## specify parent tag;;
-    mother_tags_cmb.grid(row=8, column=1, sticky='we', padx=10) ## already specified parent tags;
-    child_tags_cmb.grid(row=8, column=2, sticky='we', padx=10) ## already specified child tags;
+        pch_lbl = Label(popup, text='Добавить родителя:', font=("Arial", 13))
+        pch_lbl.grid(row=6, column=1, columnspan=2, sticky='s')
 
-    ## ##
+        mother_tags_lbl = Label(popup, text='Родительные:', font=("Arial", 13))
+        mother_tags_lbl.grid(row=7, column=1, sticky='s')
 
-    pch_lbl = Label(popup, text='Добавить родителя:', font=("Arial", 13))
-    pch_lbl.grid(row=6, column=1, columnspan=2, sticky='s')
+        child_tags_lbl = Label(popup, text='Дочерние:', font=("Arial", 13))
+        child_tags_lbl.grid(row=7, column=2, sticky='s')
 
-    mother_tags_lbl = Label(popup, text='Родительные:', font=("Arial", 13))
-    mother_tags_lbl.grid(row=7, column=1, sticky='s')
+        ## ##
 
-    child_tags_lbl = Label(popup, text='Дочерние:', font=("Arial", 13))
-    child_tags_lbl.grid(row=7, column=2, sticky='s')
+        cur.execute(f"SELECT date FROM main_tags WHERE id = '{id_text}'")
+        date_added = cur.fetchone()[0]
+        formatted_date = date_added.strftime("%d.%m.%Y")
+        date_lbl = Label(popup, text=f'Тег добавлен:\n{formatted_date}', font=("Arial", 13))
+        date_lbl.grid(row=1, column=3, padx=10, rowspan=2) ## date the tag was added to the database;
 
-    ## ##
+        ## ##
 
-    cur.execute(f"SELECT date FROM main_tags WHERE id = '{id_text}'")
-    date_added = cur.fetchone()[0]
-    formatted_date = date_added.strftime("%d.%m.%Y")
-    date_lbl = Label(popup, text=f'Тег добавлен:\n{formatted_date}', font=("Arial", 13))
-    date_lbl.grid(row=1, column=3, padx=10, rowspan=2) ## date the tag was added to the database;
-    
-    ## ##
-
-    ## expand and fill the list of tags;
-    pch_entry.bind("<Button-1>", fill_parent_sim) ## LBM;
-    pch_entry.bind("<Return>", fill_parent_sim) ## Enter;
+        ## expand and fill the list of tags;
+        pch_entry.bind("<Button-1>", fill_parent_sim) ## LBM;
+        pch_entry.bind("<Return>", fill_parent_sim) ## Enter;
 
 descption_window_btn = Button(add_tag, text="Check description", command=description_window, width=16, height=2)
 descption_window_btn.place(x=1740, y=60) ## button to open the tag editing window;

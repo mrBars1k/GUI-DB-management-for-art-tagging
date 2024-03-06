@@ -89,7 +89,7 @@ in_tag_art.place(x=20, y=90)
 art_to_tag = ttk.Combobox(ttaw, width=43, font=("Arial", 14))
 art_to_tag.place(x=20, y=40)
 
-def up_in_tag(event):
+def up_in_tag(event=None):
     att = art_to_tag.get()
     art_id = int(att.split("|")[0].strip())
 
@@ -124,11 +124,32 @@ def adta(event):
     up_in_tag(event)
     in_tag_art.delete(0, END)
 
+def delete_fom_art():
+    att = art_to_tag.get()
+    art_id = int(att.split("|")[0].strip())
+
+    item = tree.selection()[0] # selected cell in table;
+    id_text = tree.item(item, "values")[0] # id from table;
+    cur.execute(f"""DELETE FROM tag_to_art
+                    USING main_tags
+                    WHERE tag_to_art.tag = main_tags.ru
+                    AND main_tags.id = {id_text}
+                    AND tag_to_art.art = {art_id}""")
+    adb.commit()
+    up_in_tag()
+
+def show_context_menu(event):
+    context_menu.post(event.x_root, event.y_root)
+
+context_menu = Menu(ttaw, tearoff=0)
+context_menu.add_command(label="Удалить", command=delete_fom_art)
+
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ## REACTIONS;
 in_tag_art.bind("<Return>", fill_parent_sim)
 in_tag_art.bind("<Shift_R>", adta)
 art_to_tag.bind("<<ComboboxSelected>>", up_in_tag)
+tree.bind("<Button-3>", show_context_menu)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 fill_parent_sim("")

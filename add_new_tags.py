@@ -644,8 +644,17 @@ def delete_tag():
     no_confirm = Button(button_frame, text='NO', width=15, height=2, command=on_no)
     no_confirm.pack(side='right', padx=10, pady=20)
 
-descption_window_btn = Button(add_tag, text="DELETE", command=delete_tag, width=16, height=2)
-descption_window_btn.place(x=1740, y=120)
+delete_tag_btn = Button(add_tag, text="DELETE", command=delete_tag, width=16, height=2)
+delete_tag_btn.place(x=1740, y=120)
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## CONTEXT MENU;
+def show_context_menu(event):
+    context_menu.post(event.x_root, event.y_root)
+
+context_menu = Menu(mainw, tearoff=0)
+context_menu.add_command(label="Description", command=description_window)
+context_menu.add_command(label="Delete", command=delete_tag)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ## USING THE ARROWS TO SWITCH BETWEEN INPUT FIELDS: UP / DOWN;
@@ -678,6 +687,8 @@ alias3_entry.bind("<Return>", handle_enter)
 alias4_entry.bind("<Return>", handle_enter)
 
 search_entry.bind("<Return>", handle_enter)
+
+tree.bind("<Button-3>", show_context_menu)
 
 ## ## ## ##
 update_table()

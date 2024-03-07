@@ -4,6 +4,7 @@ import datetime
 import psycopg2
 from psycopg2 import sql
 from token import *
+import re
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
@@ -368,11 +369,10 @@ def description_window(): ## window for setting up an individual tag;
 
             pch_entry["values"] = similar_tags ## fill out the dropdown list;
             pch_entry.event_generate('<Down>') ## expand the list;
-            
+
             selected_item = tree.selection()
             if selected_item:
                 tree.selection_remove(selected_item[0])
-
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
@@ -432,10 +432,6 @@ def description_window(): ## window for setting up an individual tag;
             links_text.grid(row=0, column=1, rowspan=3, columnspan=2)
             links_text.insert(END, all_links)
 
-            # lt1 = links_text.get(1.0, END) ## всё без отделения;
-            # lt1 = lt1.replace('\n', '') ## удаление лишних переносов из многострочного поля ввода;
-            # lines = lt1.strip().split('\n') ## список строк ('источник: ссылка',);
-            # lines2 = [tuple(line.split(': ', 1)) for line in lines] ## список кортежей ('источник', 'ссылка'), (. . .) );
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
         else:
@@ -503,26 +499,48 @@ def description_window(): ## window for setting up an individual tag;
             adb.commit() ## changing/adding translations, aliases and tag type;
 
             ## ## ## ##
+            if what_type == 'author':
+                lt1 = links_text.get(1.0, END).strip()  ## all string;
 
-            dt1 = description_text.get(1.0, END).strip() ## ru;
-            dt2 = description_text2.get(1.0, END).strip() ## eng;
+                def extract_sources(input_string):
+                    pattern = re.compile(r'(\w+):\s(https?://\S+)')
+                    matches = pattern.findall(input_string)
 
-            try: ## delete the old description if there was one and add a new one;
-                cur.execute(f"DELETE FROM descriptions WHERE id = '{id_text}'")
+                    result = [(match[0], match[1]) for match in matches]
+                    return result
+                output = extract_sources(lt1)
 
-                cur.execute(f"""INSERT INTO descriptions (id, text, language)
-                            VALUES ('{id_text}', '{dt1}', 'RU')""")
+                try:
+                    cur.execute(f"DELETE FROM author_links WHERE artist = '{name_e}'")
+                    adb.commit()
+                    for i in output:
+                        cur.execute("INSERT INTO author_links (artist, link, type_source) VALUES (%s, %s, %s)",
+                                       (name_e, i[1], i[0]))
+                        adb.commit()
+                    print('1. Links updated!')
+                except:
+                    adb.rollback()
+                    print('1. Links failed!')
+            else:
+                dt1 = description_text.get(1.0, END).strip() ## ru;
+                dt2 = description_text2.get(1.0, END).strip() ## eng;
 
-                cur.execute(f"""INSERT INTO descriptions (id, text, language)
-                            VALUES ('{id_text}', '{dt2}', 'EN')""")
-                adb.commit()
+                try: ## delete the old description if there was one and add a new one;
+                    cur.execute(f"DELETE FROM descriptions WHERE id = '{id_text}'")
 
-                update_table()
-                print('1. Description updated!')
+                    cur.execute(f"""INSERT INTO descriptions (id, text, language)
+                                VALUES ('{id_text}', '{dt1}', 'RU')""")
 
-            except:
-                adb.rollback()
-                print('1. Description failed!')
+                    cur.execute(f"""INSERT INTO descriptions (id, text, language)
+                                VALUES ('{id_text}', '{dt2}', 'EN')""")
+                    adb.commit()
+
+                    update_table()
+                    print('1. Description updated!')
+
+                except:
+                    adb.rollback()
+                    print('1. Description failed!')
 
             try:
                 ru_need = pch_entry.get() ## get the ru name of the tag that will become the parent;

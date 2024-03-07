@@ -336,12 +336,13 @@ vsb.place(x=1710, y=50, height=800) ## sidebar for scrolling;
 
 def description_window(): ## window for setting up an individual tag;
     item = tree.selection() ## selected cell in table;
-    if item == ():
-        print("Пусто.")
 
+    if item == ():
+        pass ## if not selected item;
     else:
         item = tree.selection()[0]  ## selected cell in table;
         id_text = tree.item(item, "values")[0]  ## id of the selected object from the database;
+
         def get_similar_tags(tag_to_find): ## find all tags similar in name;
             cur.execute("""
                 SELECT mt.ru, COUNT(tta.art) AS count
@@ -360,13 +361,14 @@ def description_window(): ## window for setting up an individual tag;
                  '%' + tag_to_find + '%', '%' + tag_to_find + '%'))
             return [row[0] for row in cur.fetchall()] ## sorted by usage and date;
 
-        def fill_parent_sim(event): ## fill out the dropdown list;
+        def fill_parent_sim(event=None): ## fill out the dropdown list;
             tag_to_find = pch_entry.get() ## entered data in the add parent tag field;
             similar_tags = get_similar_tags(tag_to_find) ## found all similar tags (ru version) to those entered by the user;
             ## ['рукава', 'длинные рукава', 'короткие рукава']
 
             pch_entry["values"] = similar_tags ## fill out the dropdown list;
             pch_entry.event_generate('<Down>') ## expand the list;
+
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
@@ -384,7 +386,7 @@ def description_window(): ## window for setting up an individual tag;
         popup.geometry("{}x{}+{}+{}".format(popup_width, popup_height, x_position, y_position))
 
         cur.execute(f"""SELECT ru, eng, alias1, alias2, alias3, alias4, type FROM main_tags WHERE id = {id_text}""")
-        pop_tag_info = cur.fetchone() ## ('ru', 'eng', 'al1', 'al2', 'al3', 'al3', 'type')
+        pop_tag_info = cur.fetchone() ## all info about tag (tuple)
 
         name_entry = Entry(popup, width=36, borderwidth=3, font=("Arial", 13))
         name_entry.insert(0, f"{pop_tag_info[0]}")
@@ -480,8 +482,6 @@ def description_window(): ## window for setting up an individual tag;
             name4_e = name4_entry.get()
             name5_e = name5_entry.get()
             name6_e = name6_entry.get()
-            dt1 = description_text.get(1.0, END).strip() ## ru;
-            dt2 = description_text2.get(1.0, END).strip() ## eng;
             type = type_c.get()
 
             v = [name_e, name2_e, name3_e, name4_e, name5_e, name6_e, type]
@@ -497,6 +497,11 @@ def description_window(): ## window for setting up an individual tag;
                             SET ru = %s, eng = %s, alias1 = %s, alias2 = %s, alias3 = %s, alias4 = %s, type = %s
                             WHERE id = %s''', (v[0], v[1], v[2], v[3], v[4], v[5], v[6], id_text))
             adb.commit() ## changing/adding translations, aliases and tag type;
+
+            ## ## ## ##
+
+            dt1 = description_text.get(1.0, END).strip() ## ru;
+            dt2 = description_text2.get(1.0, END).strip() ## eng;
 
             try: ## delete the old description if there was one and add a new one;
                 cur.execute(f"DELETE FROM descriptions WHERE id = '{id_text}'")
@@ -514,7 +519,6 @@ def description_window(): ## window for setting up an individual tag;
             except:
                 adb.rollback()
                 print('1. Description failed!')
-                pass
 
             try:
                 ru_need = pch_entry.get() ## get the ru name of the tag that will become the parent;
@@ -531,6 +535,7 @@ def description_window(): ## window for setting up an individual tag;
                 print("2. The parent tag is not set!")
 
             print("3. All updated!\n")
+            pch_entry.delete(0, END)
             new_values_combo()
 
         get_en = Button(popup, text="CONFIRM", command=get_pop, width=20, height=2)
@@ -594,8 +599,10 @@ def description_window(): ## window for setting up an individual tag;
         ## ##
 
         ## expand and fill the list of tags;
-        pch_entry.bind("<Button-1>", fill_parent_sim) ## LBM;
+        # pch_entry.bind("<Button-1>", fill_parent_sim) ## LBM;
         pch_entry.bind("<Return>", fill_parent_sim) ## Enter;
+        pch_entry.bind("<<ComboboxSelected>>", fill_parent_sim)
+        fill_parent_sim()
 
 descption_window_btn = Button(add_tag, text="Check description", command=description_window, width=16, height=2)
 descption_window_btn.place(x=1740, y=60) ## button to open the tag editing window;

@@ -632,46 +632,50 @@ descption_window_btn.place(x=1740, y=60) ## button to open the tag editing windo
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ## REMOVING A TAG FROM DATABASE;
 def delete_tag():
-    item = tree.selection()[0] ## selected cell in table;
-    id_text = tree.item(item, "values")[0] ## id from table;
+    item = tree.selection() ## selected cell in table;
+    if item == ():
+        pass
+    else:
+        item = tree.selection()[0]
+        id_text = tree.item(item, "values")[0] ## id from table;
 
-    cur.execute(f"SELECT ru, eng FROM main_tags WHERE id = '{id_text}'")
-    confirm_del_tag = cur.fetchall() ## RU and EN tag name;
+        cur.execute(f"SELECT ru, eng FROM main_tags WHERE id = '{id_text}'")
+        confirm_del_tag = cur.fetchall() ## RU and EN tag name;
 
-    popup2 = Toplevel() ## delete window instance;
-    popup2.title("Delete menu:")
+        popup2 = Toplevel() ## delete window instance;
+        popup2.title("Delete menu:")
 
-    screen_width = mainw.winfo_screenwidth()
-    screen_height = mainw.winfo_screenheight()
+        screen_width = mainw.winfo_screenwidth()
+        screen_height = mainw.winfo_screenheight()
 
-    popup_width = 440
-    popup_height = 170
+        popup_width = 440
+        popup_height = 170
 
-    popup2.geometry("{}x{}+{}+{}".format(popup_width, popup_height, 1200, 140))
+        popup2.geometry("{}x{}+{}+{}".format(popup_width, popup_height, 1200, 140))
 
-    frame = Frame(popup2)
-    frame.pack(expand=True, fill='both')
+        frame = Frame(popup2)
+        frame.pack(expand=True, fill='both')
 
-    confirm_lbl = Label(frame, text=f'Are you sure you want to remove the tag\n<{confirm_del_tag[0][0]} / {confirm_del_tag[0][1]}>?')
-    confirm_lbl.pack(pady=10)
+        confirm_lbl = Label(frame, text=f'Are you sure you want to remove the tag\n<{confirm_del_tag[0][0]} / {confirm_del_tag[0][1]}>?')
+        confirm_lbl.pack(pady=10)
 
-    button_frame = Frame(frame)
-    button_frame.pack(pady=20)
+        button_frame = Frame(frame)
+        button_frame.pack(pady=20)
 
-    def del_tag(): ## remove tag and close a window;
-        cur.execute(f"""DELETE FROM main_tags WHERE id = '{id_text}'""")
-        adb.commit()
-        popup2.destroy()
-        update_table()
+        def del_tag(): ## remove tag and close a window;
+            cur.execute(f"""DELETE FROM main_tags WHERE id = '{id_text}'""")
+            adb.commit()
+            popup2.destroy()
+            update_table()
 
-    def on_no(): ## close the window;
-        popup2.destroy()
+        def on_no(): ## close the window;
+            popup2.destroy()
 
-    yes_confirm = Button(button_frame, text='YES', width=15, height=2, command=del_tag)
-    yes_confirm.pack(side='left', padx=10, pady=20)
+        yes_confirm = Button(button_frame, text='YES', width=15, height=2, command=del_tag)
+        yes_confirm.pack(side='left', padx=10, pady=20)
 
-    no_confirm = Button(button_frame, text='NO', width=15, height=2, command=on_no)
-    no_confirm.pack(side='right', padx=10, pady=20)
+        no_confirm = Button(button_frame, text='NO', width=15, height=2, command=on_no)
+        no_confirm.pack(side='right', padx=10, pady=20)
 
 delete_tag_btn = Button(add_tag, text="DELETE", command=delete_tag, width=16, height=2)
 delete_tag_btn.place(x=1740, y=120)

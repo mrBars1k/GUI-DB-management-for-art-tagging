@@ -368,6 +368,10 @@ def description_window(): ## window for setting up an individual tag;
 
             pch_entry["values"] = similar_tags ## fill out the dropdown list;
             pch_entry.event_generate('<Down>') ## expand the list;
+            
+            selected_item = tree.selection()
+            if selected_item:
+                tree.selection_remove(selected_item[0])
 
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##

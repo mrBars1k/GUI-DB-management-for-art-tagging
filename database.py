@@ -1,6 +1,6 @@
 import psycopg2
 from psycopg2 import sql
-from token import *
+from tk import *
 
 adb = psycopg2.connect(
     dbname=dbname,

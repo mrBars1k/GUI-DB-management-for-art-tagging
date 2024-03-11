@@ -3,7 +3,8 @@ from tkinter import ttk
 import datetime
 import psycopg2
 from psycopg2 import sql
-from token import *
+from tk import *
+import webbrowser
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ttaw = Tk() ## main window;
@@ -108,6 +109,17 @@ def up_in_tag(event=None):
 
     for j in data: ## fill with new ones;
         tree.insert("", "end", values=j)
+
+    cur.execute(f"SELECT url FROM arts WHERE id = {art_id}")
+    url = cur.fetchone()[0]
+
+    def open_link():
+        link = f"{url}"
+        webbrowser.open_new(link)
+
+    lbl_new = Label(ttaw, text="Open image", font=("Arial", 14), cursor="hand2", fg="blue")
+    lbl_new.bind("<Button-1>", lambda event: open_link())
+    lbl_new.place(x=210, y=8)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ## TAG TO ART;
